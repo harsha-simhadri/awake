@@ -1,2 +1,2 @@
-pub mod vector_provider;
-pub use vector_provider::VecProvider;
+pub mod redis_mini_vector_provider;
+pub use redis_mini_vector_provider::RedisMiniVecProvider;
