@@ -103,6 +103,7 @@ name = "awake"
 version = "0.1.0"
 dependencies = [
  "bytes",
+ "cc",
  "futures",
  "mini-redis",
  "rand",

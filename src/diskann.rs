@@ -5,15 +5,15 @@ use rand::prelude::*;
 use std::sync::atomic::AtomicUsize;
 
 use crate::utils::*;
-use crate::RedisMiniVecProvider;
+use crate::MiniRedisVecProvider;
 
 pub struct DiskANN {
-    vec_provider: RedisMiniVecProvider,
+    vec_provider: MiniRedisVecProvider,
     num_vectors: AtomicUsize,
 }
 
 impl DiskANN {
-    pub fn new(vector_provider: RedisMiniVecProvider) -> Self {
+    pub fn new(vector_provider: MiniRedisVecProvider) -> Self {
         DiskANN {
             vec_provider: vector_provider,
             num_vectors: AtomicUsize::new(0),

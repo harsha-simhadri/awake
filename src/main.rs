@@ -2,12 +2,13 @@ use bytes::Bytes;
 use mini_redis::{client, Result};
 
 use crate::diskann::*;
+use crate::miniredis_vec_provider::*;
 use crate::utils::*;
-use crate::redis_mini_vec_provider::*;
 
 pub mod diskann;
+pub mod miniredis_vec_provider;
+pub mod c_vector_provider;
 pub mod utils;
-pub mod redis_mini_vec_provider;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -22,6 +23,7 @@ async fn main() -> Result<()> {
 
     println!("got value from the server; result={:?}", result);
 
+
     Ok(())
 }
 
@@ -30,7 +32,7 @@ async fn test_diskann() {
     let num_vectors = 1000;
     let dimension = 5;
     let client = client::connect("127.0.0.1:6379").await.unwrap();
-    let vec_provider = RedisMiniVecProvider::new(client, "pathXYZ".to_string(), dimension);
+    let vec_provider = MiniRedisVecProvider::new(client, "pathXYZ".to_string(), dimension);
     let mut diskann = DiskANN::new(vec_provider);
     let random_vectors = get_random_vectors(num_vectors, dimension);
     diskann.set_vectors(random_vectors.clone()).await;
