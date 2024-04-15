@@ -41,7 +41,7 @@ void add_to_billion_and_call_back(long long unsigned int* sum, void (*callback)(
     *sum = 0;
     for (i = 0; i < 1000000000llu; i++)
     {
-        *sum += i++;
+        *sum += i;
     }
 
     printf(L"sum_billion_numbers_and_call_back computed sum of billion numbers to be: %llu\n", sum);
