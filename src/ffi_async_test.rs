@@ -57,9 +57,6 @@ use std::task::{Context, Poll, Waker};
 //     is_completed: bool,
 // }
 
-
-
-
 #[derive(Default)]
 pub struct ContextHandle {
     waker: Option<Waker>,
@@ -78,7 +75,6 @@ impl ContextHandle {
         }
     }
 }
-
 
 // Callback function to be passed to the C++ side
 pub extern "C" fn callback_function(context_handle: *mut c_void) {
@@ -129,7 +125,6 @@ impl Future for SpinFuture {
 struct AddToBillionFuture {
     sum: u64,
     is_done: bool,
-    never_called: bool,
 }
 
 impl default::Default for AddToBillionFuture {
@@ -137,7 +132,6 @@ impl default::Default for AddToBillionFuture {
         AddToBillionFuture {
             sum: 0,
             is_done: false,
-            never_called: true,
         }
     }
 }
@@ -147,13 +141,11 @@ impl Future for AddToBillionFuture {
 
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         if self.is_done {
-
             Poll::Ready(self.sum)
         } else {
             let mut context_handle = ContextHandle::default();
             context_handle.set_waker(cx.waker().clone());
-            if self.never_called {
-                self.never_called = false;
+
             unsafe {
                 add_to_billion_and_call_back(
                     &mut self.sum as *mut _ as *mut u64,
@@ -161,7 +153,6 @@ impl Future for AddToBillionFuture {
                     &mut context_handle as *mut _ as *mut c_void,
                 )
             };
-        }
             self.is_done = true;
             Poll::Pending
         }
@@ -196,4 +187,3 @@ mod tests {
         assert_eq!(result, sum);
     }
 }
-
