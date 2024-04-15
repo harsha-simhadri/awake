@@ -1,5 +1,6 @@
 //use std::ffi::errorcodes::*;
 use futures::Future;
+use std::default;
 use std::ffi::c_void;
 use std::os::raw::c_char;
 use std::pin::Pin;
@@ -56,9 +57,8 @@ use std::task::{Context, Poll, Waker};
 //     is_completed: bool,
 // }
 
-struct ReadValueFuture {
-    really_done: bool, // replace with actual type
-}
+
+
 
 #[derive(Default)]
 pub struct ContextHandle {
@@ -79,7 +79,6 @@ impl ContextHandle {
     }
 }
 
-type Cb = extern "C" fn(*mut c_void);
 
 // Callback function to be passed to the C++ side
 pub extern "C" fn callback_function(context_handle: *mut c_void) {
@@ -91,37 +90,79 @@ pub extern "C" fn callback_function(context_handle: *mut c_void) {
     context_handle.wake_task();
 }
 
-// C++ function signature
-// External function declaration to call the C++ function with callback
+type Cb = extern "C" fn(*mut c_void);
+
 #[link(name = "c_ffi_async", kind = "static")]
 extern "C" {
     fn rust_callback(result: *const c_char, error_code: i32);
     fn spin_and_call_back(callback: Cb, context_handle: *mut c_void);
+    fn add_to_billion_and_call_back(sum: *mut u64, callback: Cb, context_handle: *mut c_void);
 }
 
-impl Future for ReadValueFuture {
+struct SpinFuture {
+    is_done: bool, // replace with actual type
+}
+
+impl Future for SpinFuture {
     type Output = (); // replace with actual types
 
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
-        println!("future polled");
-        // check if the file is done reading
-        if self.really_done {
+        if self.is_done {
             println!("future ready done");
             Poll::Ready(())
         } else {
             let mut context_handle = ContextHandle::default();
             context_handle.set_waker(cx.waker().clone());
-
             unsafe {
                 spin_and_call_back(
                     callback_function,
                     &mut context_handle as *mut _ as *mut c_void,
                 )
             };
+            self.is_done = true;
+            Poll::Pending
+        }
+    }
+}
 
-            //update state to reading
-            println!("future pending");
-            self.really_done = true;
+#[repr(C)]
+struct AddToBillionFuture {
+    sum: u64,
+    is_done: bool,
+    never_called: bool,
+}
+
+impl default::Default for AddToBillionFuture {
+    fn default() -> Self {
+        AddToBillionFuture {
+            sum: 0,
+            is_done: false,
+            never_called: true,
+        }
+    }
+}
+
+impl Future for AddToBillionFuture {
+    type Output = u64;
+
+    fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+        if self.is_done {
+
+            Poll::Ready(self.sum)
+        } else {
+            let mut context_handle = ContextHandle::default();
+            context_handle.set_waker(cx.waker().clone());
+            if self.never_called {
+                self.never_called = false;
+            unsafe {
+                add_to_billion_and_call_back(
+                    &mut self.sum as *mut _ as *mut u64,
+                    callback_function,
+                    &mut context_handle as *mut _ as *mut c_void,
+                )
+            };
+        }
+            self.is_done = true;
             Poll::Pending
         }
     }
@@ -132,11 +173,27 @@ mod tests {
     use crate::ffi_async_test::*;
 
     #[tokio::test]
-    async fn test_read_value_future() {
-        let future = ReadValueFuture { really_done: false };
+    async fn test_spin_future() {
+        let future = SpinFuture { is_done: false };
 
         tokio::spawn(async move {
             future.await;
         });
     }
+
+    #[tokio::test]
+    async fn test_add_to_billion_future() {
+        let future = AddToBillionFuture::default();
+
+        let result = future.await;
+        let mut sum: u64 = 0;
+        let mut i = 0;
+        for _ in 0..1_000_000_000 {
+            sum += i;
+            i = i + 1;
+        }
+
+        assert_eq!(result, sum);
+    }
 }
+
