@@ -1,20 +1,5 @@
 use bytes::Bytes;
 use mini_redis::{client, Result};
-use std::future::Future;
-use std::pin::Pin;
-use std::task::Poll;
-
-// pub struct GetFuture<'a> {
-//     client: &'a mut client::Client,
-//     result: &'a Box<dyn Future<Output = Result<Option<Bytes>>>,// Box<dyn Err + Send + Sync, Global>>>,
-// }
-
-// impl<'a> Future for GetFuture<'a> {
-//     type Output = Result<Option<Bytes>>;
-//     fn poll(self: Pin<&mut Self>, cx: &mut std::task::Context<'_>) -> Poll<Self::Output> {
-//         self.result.as_mut().poll(cx)
-//     }
-// }
 
 pub struct MiniRedisVecProvider {
     client: client::Client,

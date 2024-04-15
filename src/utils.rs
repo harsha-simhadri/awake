@@ -1,3 +1,5 @@
+use std::default;
+
 use rand::prelude::*;
 
 pub fn get_random_vectors(num_vectors: usize, dimension: usize) -> Vec<Vec<u8>> {
@@ -20,14 +22,16 @@ pub struct Candidate {
     distance: f32,
 }
 
-impl Candidate {
-    pub fn new() -> Self {
+impl default::Default for Candidate {
+    fn default() -> Self {
         Candidate {
             id: 0,
             distance: std::f32::MAX,
         }
     }
+}
 
+impl Candidate {
     pub fn update(&mut self, id: usize, distance: f32) {
         if distance < self.distance {
             self.id = id;

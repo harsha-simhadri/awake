@@ -22,10 +22,6 @@ int open_fp_to_read(char *filename, FILE **fp)
         printf("Error: cannot open file %s\n", filename);
         return -1;
     }
-    else
-    {
-        printf("File %s opened\n", filename);
-    }
     return 0;
 }
 
@@ -41,10 +37,6 @@ int open_fp_to_rw(char *filename, FILE **fp)
     {
         printf("Error: cannot open file %s\n", filename);
         return -1;
-    }
-    else
-    {
-        printf("File %s opened\n", filename);
     }
     return 0;
 }
