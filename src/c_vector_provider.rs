@@ -126,6 +126,10 @@ impl CVecProviderU8 {
         }
     }
 
+    pub async fn get_vector_u8_async(&self, idx: usize) -> Result<Vec<u8>, String> {
+       self.get_vector_u8(idx)
+    }
+
     pub fn set_vector_u8(&self, idx: usize, vec: &[u8]) -> Result<(), String> {
         let ret = unsafe { set_vector_u8(self.fp, &self.metadata, idx, vec.as_ptr()) };
         match ret {
