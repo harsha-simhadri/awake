@@ -1,38 +1,33 @@
 #include "stdio.h"
 
-void rust_callback(const char *result, int error_code)
-{
-    if (error_code == 0)
-    {
-        printf(L" C++ ::callback called \n", result);
-        // end_read_file(result);
-    }
-    else
-    {
-        printf(L" C++ ::err called \n");
-    }
-}
+// void rust_callback(const char *result, int error_code)
+// {
+//     if (error_code == 0)
+//     {
+//         printf(L" C++ ::callback called \n", result);
+//         // end_read_file(result);
+//     }
+//     else
+//     {
+//         printf(L" C++ ::err called \n");
+//     }
+// }
 
 // Function to simulate calling C++ function getValue and invoking the callback
-void cpp_call_get_value(void (*callback)(void *), void *context_handle)
+void spin_and_call_back(void (*callback)(void *), void *context_handle)
 {
-    // Simulate getting value from C++ function
-    // Here, getValue should be replaced with the actual C++ function call
-    printf(L"Calling C++ function getValue \n");
+    printf(L"spin_and_call_back started.\n");
 
     float i = 0;
     float sum = 0;
     for (i = 0; i < 1000000000; i++)
     {
-        sum += i;
+        sum += i++;
     }
 
+    printf(L"spin_and_call_back computed sum of billion numbers to be: %f\n", sum);
 
-    // Simulate completion of async operation
-    printf(L"C++ function getValue completed: %f\n", sum);
-
-    // Invoke the callback function
     callback(context_handle);
 
-    printf(L"C++ function getValue submitted\n");
+    printf(L"spin_and_call_back finished callback and is at the end of function\n");
 }

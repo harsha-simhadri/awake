@@ -51,12 +51,12 @@ use std::task::{Context, Poll, Waker};
 // }
 
 // struct GetValueFuture {
+// file_handle: u32, // replace with actual type
+// state: u32,
 //     is_completed: bool,
 // }
 
 struct ReadValueFuture {
-    file_handle: u32, // replace with actual type
-    state: u32,
     really_done: bool, // replace with actual type
 }
 
@@ -96,18 +96,7 @@ pub extern "C" fn callback_function(context_handle: *mut c_void) {
 #[link(name = "c_ffi_async", kind = "static")]
 extern "C" {
     fn rust_callback(result: *const c_char, error_code: i32);
-    fn cpp_call_get_value(callback: Cb, context_handle: *mut c_void);
-}
-
-// Rust function to call the C++ function with callback
-pub fn call_cpp_get_value(
-    callback: extern "C" fn(*mut c_void),
-    context_handle: &mut ContextHandle,
-) {
-    // Call the C++ function with the callback and context handle
-    unsafe {
-        cpp_call_get_value(callback, context_handle as *mut _ as *mut c_void);
-    }
+    fn spin_and_call_back(callback: Cb, context_handle: *mut c_void);
 }
 
 impl Future for ReadValueFuture {
@@ -117,16 +106,18 @@ impl Future for ReadValueFuture {
         println!("future polled");
         // check if the file is done reading
         if self.really_done {
-            self.state = 25;
             println!("future ready done");
             Poll::Ready(())
         } else {
-            let file_handle = self.file_handle;
             let mut context_handle = ContextHandle::default();
-            // Set the waker in the context handle
             context_handle.set_waker(cx.waker().clone());
 
-            call_cpp_get_value(callback_function, &mut context_handle);
+            unsafe {
+                spin_and_call_back(
+                    callback_function,
+                    &mut context_handle as *mut _ as *mut c_void,
+                )
+            };
 
             //update state to reading
             println!("future pending");
@@ -142,11 +133,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_read_value_future() {
-        let future = ReadValueFuture {
-            file_handle: 0,
-            state: 0,
-            really_done: false,
-        };
+        let future = ReadValueFuture { really_done: false };
 
         tokio::spawn(async move {
             future.await;
