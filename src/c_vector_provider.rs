@@ -137,6 +137,13 @@ impl CVecProviderU8 {
 
 static SIFT_10K_FBIN_FILENAME: &str = "sift_query.fbin";
 static SIFT_10K_U8BIN_FILENAME: &str = "sift_query.u8bin";
+static SIFT_LEARN_FBIN_FILENAME: &str = "sift_learn.fbin";
+static SIFT_LEARN_U8BIN_FILENAME: &str = "sift_learn.u8bin";
+
+static SIFT_10K_NPTS_U32: u32 = 10_000u32;
+static SIFT_10K_NDIMS_U32: u32 = 128u32;
+static SIFT_LEARN_NPTS_U32: u32 = 100_000u32;
+static SIFT_LEARN_NDIMS_U32: u32 = 128u32;
 
 static SIFT_10K_FIRST_VEC_F32: [f32; 128] = [
     1.0, 3.0, 11.0, 110.0, 62.0, 22.0, 4.0, 0.0, 43.0, 21.0, 22.0, 18.0, 6.0, 28.0, 64.0, 9.0,
@@ -184,12 +191,12 @@ static SIFT_LEARN_LAST_VEC_F32: [f32; 128] = [
 
 #[test]
 fn test_create_file() {
-    let sift_10K_path = format!(
+    let sift_10k_path = format!(
         "{}/{}",
         std::env::var("CARGO_MANIFEST_DIR").unwrap(),
         SIFT_10K_FBIN_FILENAME
     );
-    let filename = CString::new(sift_10K_path).unwrap();
+    let filename = CString::new(sift_10k_path).unwrap();
 
     let mut fp: *mut std::os::raw::c_void = std::ptr::null_mut();
     let ret = unsafe { open_fp_to_read(filename.as_bytes().as_ptr(), &mut fp) };
@@ -201,12 +208,12 @@ fn test_create_file() {
 
 #[test]
 fn test_get_vector_f32() {
-    let sift_10K_path = format!(
+    let sift_10k_path = format!(
         "{}/{}",
         std::env::var("CARGO_MANIFEST_DIR").unwrap(),
         SIFT_10K_FBIN_FILENAME
     );
-    let filename = CString::new(sift_10K_path).unwrap();
+    let filename = CString::new(sift_10k_path).unwrap();
 
     let mut fp: *mut std::os::raw::c_void = std::ptr::null_mut();
     let ret = unsafe { open_fp_to_read(filename.as_bytes().as_ptr(), &mut fp) };
@@ -216,8 +223,8 @@ fn test_get_vector_f32() {
     let mut metadata: Metadata = Default::default();
     let ret = unsafe { read_metadata(fp, &mut metadata) };
     assert_eq!(ret, 0);
-    assert_eq!(metadata.npts_u32, 10_000);
-    assert_eq!(metadata.ndims_u32, 128);
+    assert_eq!(metadata.npts_u32, SIFT_10K_NPTS_U32);
+    assert_eq!(metadata.ndims_u32, SIFT_10K_NDIMS_U32);
 
     // Check the first vector
     let mut vec: Vec<f32> = vec![0.0; metadata.ndims_u32 as usize];
@@ -238,17 +245,17 @@ fn test_get_vector_f32() {
 #[test]
 fn test_rust_read_f32_file() {
     let cargo_manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap();
-    let sift_10K_path = format!("{}/{}", cargo_manifest_dir, SIFT_10K_FBIN_FILENAME);
+    let sift_10k_path = format!("{}/{}", cargo_manifest_dir, SIFT_10K_FBIN_FILENAME);
 
-    let (metadata, rust_vec) = rust_read_file::<f32>(sift_10K_path).unwrap();
-    assert_eq!(metadata.npts_u32, 10_000);
-    assert_eq!(metadata.ndims_u32, 128);
+    let (metadata, rust_vec) = rust_read_file::<f32>(sift_10k_path).unwrap();
+    assert_eq!(metadata.npts_u32, SIFT_10K_NPTS_U32);
+    assert_eq!(metadata.ndims_u32, SIFT_10K_NDIMS_U32);
     assert_eq!(
         rust_vec.len(),
         metadata.npts_u32 as usize * metadata.ndims_u32 as usize
     );
-    assert_eq!(rust_vec[0..128], SIFT_10K_FIRST_VEC_F32);
-    assert_eq!(rust_vec[128 * 9_999..128 * 10_000], SIFT_10K_LAST_VEC_F32);
+    assert_eq!(rust_vec[0..SIFT_10K_NDIMS_U32 as usize], SIFT_10K_FIRST_VEC_F32);
+    assert_eq!(rust_vec[SIFT_10K_NDIMS_U32 as usize * 9_999..SIFT_10K_NDIMS_U32 as usize * SIFT_10K_NPTS_U32 as usize], SIFT_10K_LAST_VEC_F32);
 }
 
 #[test]
@@ -268,8 +275,8 @@ fn test_convert_sift_learn_fbin_to_u8bin() {
     assert!(convert_ret.is_ok());
 
     let (metadata, rust_vec) = rust_read_file::<u8>(sift_learn_u8_path).unwrap();
-    assert_eq!(metadata.npts_u32, 10_000);
-    assert_eq!(metadata.ndims_u32, 128);
+    assert_eq!(metadata.npts_u32, SIFT_10K_NPTS_U32);
+    assert_eq!(metadata.ndims_u32, SIFT_10K_NDIMS_U32);
     assert_eq!(
         rust_vec.len(),
         metadata.npts_u32 as usize * metadata.ndims_u32 as usize
@@ -278,14 +285,14 @@ fn test_convert_sift_learn_fbin_to_u8bin() {
     // The following two tests hold for SIFT_LEARN because it's really a u8 dataset padded up to f32
     // This test is not valid for other datasets in general.
     assert_eq!(
-        rust_vec[0..128]
-            .iter()
+        rust_vec[0..SIFT_10K_NDIMS_U32 as usize]
+            .into_iter()
             .map(|&x| x as f32)
             .collect::<Vec<f32>>(),
         SIFT_10K_FIRST_VEC_F32
     );
     assert_eq!(
-        rust_vec[128 * 9_999..128 * 10_000]
+        rust_vec[SIFT_10K_NDIMS_U32 as usize * 9_999..SIFT_10K_NDIMS_U32 as usize * SIFT_10K_NPTS_U32 as usize]
             .iter()
             .map(|&x| x as f32)
             .collect::<Vec<f32>>(),
