@@ -175,15 +175,7 @@ mod tests {
     #[tokio::test]
     async fn test_add_to_billion_future() {
         let future = AddToBillionFuture::default();
-
         let result = future.await;
-        let mut sum: u64 = 0;
-        let mut i = 0;
-        for _ in 0..1_000_000_000 {
-            sum += i;
-            i = i + 1;
-        }
-
-        assert_eq!(result, sum);
+        assert_eq!(result, (1_000_000_000u64/2)*999_999_999u64);
     }
 }
