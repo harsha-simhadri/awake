@@ -3,6 +3,7 @@ use bytes::Bytes;
 use mini_redis::Result;
 use rand::prelude::*;
 use std::sync::atomic::AtomicUsize;
+use crate::vec_provider_trait::VecProvider;
 
 use crate::utils::*;
 use crate::MiniRedisVecProvider;

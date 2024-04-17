@@ -1,10 +1,31 @@
 use bytes::Bytes;
 use mini_redis::{client, Result};
 
+use crate::vec_provider_trait::VecProvider;
+
 pub struct MiniRedisVecProvider {
     client: client::Client,
     path_prefix: String,
     dimension: usize,
+}
+
+impl VecProvider for MiniRedisVecProvider {
+    async fn get_zero(&mut self) -> i32 {
+        0
+    }
+
+    async fn get(&mut self, vec_id: usize) -> Result<Option<Bytes>> {
+        let key = format!("{}:{}", self.path_prefix, vec_id);
+        self.client.get(&key).await
+    }
+
+    async fn set(&mut self, vec_id: usize, value: Vec<u8>) -> Result<()> {
+        if self.dimension != value.len() {
+            return Err("Dimension mismatch".into());
+        }
+        let key = format!("{}:{}", self.path_prefix, vec_id);
+        self.client.set(&key, Bytes::from(value)).await
+    }
 }
 
 impl MiniRedisVecProvider {
@@ -14,19 +35,6 @@ impl MiniRedisVecProvider {
             path_prefix,
             dimension,
         }
-    }
-
-    pub async fn get(&mut self, vec_id: usize) -> Result<Option<Bytes>> {
-        let key = format!("{}:{}", self.path_prefix, vec_id);
-        self.client.get(&key).await
-    }
-
-    pub async fn set(&mut self, vec_id: usize, value: Vec<u8>) -> Result<()> {
-        if self.dimension != value.len() {
-            return Err("Dimension mismatch".into());
-        }
-        let key = format!("{}:{}", self.path_prefix, vec_id);
-        self.client.set(&key, Bytes::from(value)).await
     }
 }
 
