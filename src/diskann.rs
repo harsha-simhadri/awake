@@ -1,20 +1,22 @@
 use bytes::Bytes;
 //use futures::future::{join_all, try_join_all};
+use crate::vec_provider_trait::VecProvider;
 use mini_redis::Result;
 use rand::prelude::*;
 use std::sync::atomic::AtomicUsize;
-use crate::vec_provider_trait::VecProvider;
 
 use crate::utils::*;
-use crate::MiniRedisVecProvider;
 
-pub struct DiskANN {
-    vec_provider: MiniRedisVecProvider,
+pub struct DiskANN<VP: VecProvider> {
+    vec_provider: VP,
     num_vectors: AtomicUsize,
 }
 
-impl DiskANN {
-    pub fn new(vector_provider: MiniRedisVecProvider) -> Self {
+impl<VP> DiskANN<VP>
+where
+    VP: VecProvider,
+{
+    pub fn new(vector_provider: VP) -> Self {
         DiskANN {
             vec_provider: vector_provider,
             num_vectors: AtomicUsize::new(0),

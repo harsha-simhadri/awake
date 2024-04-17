@@ -176,6 +176,6 @@ mod tests {
     async fn test_add_to_billion_future() {
         let future = AddToBillionFuture::default();
         let result = future.await;
-        assert_eq!(result, (1_000_000_000u64/2)*999_999_999u64);
+        assert_eq!(result, (1_000_000_000u64 / 2) * 999_999_999u64);
     }
 }

@@ -4,9 +4,9 @@ use mini_redis::{client, Result};
 pub mod c_vector_provider;
 pub mod diskann;
 pub mod ffi_async_test;
-pub mod vec_provider_trait;
 pub mod miniredis_vec_provider;
 pub mod utils;
+pub mod vec_provider_trait;
 
 #[tokio::main]
 async fn main() -> Result<()> {
